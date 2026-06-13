@@ -1,0 +1,12 @@
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+CREATE TYPE "Role" AS ENUM ('AGENT','CUSTOMER');
+CREATE TYPE "SessionStatus" AS ENUM ('ACTIVE','ENDED');
+CREATE TYPE "ParticipantStatus" AS ENUM ('JOINED','DISCONNECTED','LEFT');
+CREATE TYPE "RecordingStatus" AS ENUM ('IDLE','RECORDING','PROCESSING','READY','FAILED');
+CREATE TABLE "User" ("id" TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text, "email" TEXT NOT NULL UNIQUE, "passwordHash" TEXT NOT NULL, "role" "Role" NOT NULL DEFAULT 'AGENT', "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP);
+CREATE TABLE "Session" ("id" TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text, "title" TEXT NOT NULL, "inviteTokenHash" TEXT NOT NULL UNIQUE, "inviteExpiresAt" TIMESTAMP NOT NULL, "inviteUsedAt" TIMESTAMP, "status" "SessionStatus" NOT NULL DEFAULT 'ACTIVE', "recordingStatus" "RecordingStatus" NOT NULL DEFAULT 'IDLE', "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, "endedAt" TIMESTAMP, "agentId" TEXT NOT NULL REFERENCES "User"("id"));
+CREATE TABLE "SessionParticipant" ("id" TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text, "sessionId" TEXT NOT NULL REFERENCES "Session"("id"), "role" "Role" NOT NULL, "displayName" TEXT NOT NULL, "status" "ParticipantStatus" NOT NULL DEFAULT 'JOINED', "socketId" TEXT, "identityKey" TEXT NOT NULL, "joinedAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, "leftAt" TIMESTAMP, "disconnectedAt" TIMESTAMP, UNIQUE("sessionId","identityKey"));
+CREATE TABLE "SessionEvent" ("id" TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text, "sessionId" TEXT NOT NULL REFERENCES "Session"("id"), "type" TEXT NOT NULL, "actorRole" "Role", "metadata" JSONB, "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP);
+CREATE TABLE "ChatMessage" ("id" TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text, "sessionId" TEXT NOT NULL REFERENCES "Session"("id"), "senderRole" "Role" NOT NULL, "content" TEXT NOT NULL, "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP);
+CREATE TABLE "ChatAttachment" ("id" TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text, "messageId" TEXT NOT NULL REFERENCES "ChatMessage"("id"), "storageKey" TEXT NOT NULL, "originalName" TEXT NOT NULL, "mimeType" TEXT NOT NULL, "size" INTEGER NOT NULL, "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP);
+CREATE TABLE "Recording" ("id" TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text, "sessionId" TEXT NOT NULL REFERENCES "Session"("id"), "status" "RecordingStatus" NOT NULL DEFAULT 'PROCESSING', "storageKey" TEXT, "startedAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, "stoppedAt" TIMESTAMP, "size" INTEGER);

@@ -95,7 +95,11 @@ async function recordEvent(sessionId: string, type: string, actorRole?: Role, me
 
 async function assertActiveSession(sessionId: string) {
   const session = await prisma.session.findUnique({ where: { id: sessionId } });
-  if (!session || session.status !== SessionStatus.ACTIVE) throw new Error('Session is not active');
+  if (!session || session.status !== SessionStatus.ACTIVE) {
+    const error = new Error('Session is not active');
+    (error as Error & { status?: number }).status = 409;
+    throw error;
+  }
   return session;
 }
 
@@ -277,6 +281,11 @@ io.on('connection', (socket) => {
       io.emit('sessions:update');
     }, reconnectGraceMs);
   });
+});
+
+app.use((error: Error & { status?: number }, _req: Request, res: Response, _next: NextFunction) => {
+  log.error({ error }, 'request failed');
+  return res.status(error.status ?? 500).json({ error: error.status ? error.message : 'Internal server error' });
 });
 
 if (require.main === module) server.listen(process.env.PORT ?? 4000, () => log.info('api listening'));

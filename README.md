@@ -14,6 +14,8 @@ flowchart LR
   SFU -->|server-routed WebRTC RTP| Web
 ```
 
+The Mermaid source is also available at `docs/architecture.mmd` for rendering into an image/PDF.
+
 ## Local run
 
 ```bash
@@ -28,7 +30,7 @@ Open <http://localhost:3000>. The compose seed step creates the local agent from
 
 - `apps/web`: Next.js frontend for agent login, dashboard, customer join, active call, history, and admin live sessions.
 - `apps/api`: Express API with Socket.IO signaling for auth, sessions, chat, presence, uploads, recording metadata, health, and Prometheus metrics.
-- `apps/media-server`: mediasoup SFU that creates routers, WebRTC transports, producers, and consumers so media is routed through SightBridge servers.
+- `apps/media-server`: mediasoup SFU that verifies signaling JWTs and creates routers, WebRTC transports, producers, and consumers so media is routed through SightBridge servers.
 - `packages/shared`: shared TypeScript constants and Zod schemas.
 
 ## API routes

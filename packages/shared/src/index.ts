@@ -1,0 +1,11 @@
+import { z } from 'zod';
+export const Roles = ['AGENT','CUSTOMER'] as const;
+export const SessionStatus = ['ACTIVE','ENDED'] as const;
+export const RecordingStatus = ['IDLE','RECORDING','PROCESSING','READY','FAILED'] as const;
+export const loginSchema = z.object({ email:z.string().email(), password:z.string().min(8) });
+export const createSessionSchema = z.object({ title:z.string().min(1).max(120) });
+export const joinSchema = z.object({ token:z.string().min(32), displayName:z.string().min(1).max(80) });
+export const chatSchema = z.object({ content:z.string().trim().min(1).max(2000) });
+export const uploadMimeTypes = ['image/png','image/jpeg','application/pdf','text/plain','application/vnd.openxmlformats-officedocument.wordprocessingml.document','video/webm'];
+export type Role = typeof Roles[number];
+export type ClientEvents = { chat: {sessionId:string; content:string}; presence:{sessionId:string; state:string}; };

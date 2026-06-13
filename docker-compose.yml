@@ -15,24 +15,24 @@ services:
   api:
     image: node:22
     working_dir: /app
-    command: sh -c 'corepack enable && pnpm install && pnpm --filter @sightbridge/api prisma:migrate && pnpm --filter @sightbridge/api seed && pnpm --filter @sightbridge/api dev'
+    command: sh -c 'corepack enable && pnpm install --no-frozen-lockfile && pnpm --filter @sightbridge/api prisma:migrate && pnpm --filter @sightbridge/api seed && pnpm --filter @sightbridge/api dev'
     env_file: .env.example
-    volumes: ['.:/app']
+    volumes: ['.:/app', 'api_storage:/data/sightbridge']
     ports: ['4000:4000']
     depends_on: [postgres,redis,minio]
   media-server:
     image: node:22
     working_dir: /app
-    command: sh -c 'corepack enable && pnpm install && pnpm --filter @sightbridge/media-server dev'
+    command: sh -c 'corepack enable && pnpm install --no-frozen-lockfile && pnpm --filter @sightbridge/media-server dev'
     env_file: .env.example
     ports: ['5000:5000','40000-40100:40000-40100/udp']
     volumes: ['.:/app']
   web:
     image: node:22
     working_dir: /app
-    command: sh -c 'corepack enable && pnpm install && pnpm --filter @sightbridge/web dev'
+    command: sh -c 'corepack enable && pnpm install --no-frozen-lockfile && pnpm --filter @sightbridge/web dev'
     env_file: .env.example
     ports: ['3000:3000']
     volumes: ['.:/app']
     depends_on: [api,media-server]
-volumes: {pgdata: {}}
+volumes: {pgdata: {}, api_storage: {}}

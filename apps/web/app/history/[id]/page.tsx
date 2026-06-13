@@ -8,7 +8,7 @@ type History = {
   title: string;
   status: string;
   recordingStatus: string;
-  participants: { id: string; displayName: string; role: string; status: string }[];
+  participants: { id: string; displayName: string; role: string; status: string; joinedAt: string; leftAt?: string | null }[];
   messages: { id: string; senderRole: string; content: string; attachments: { id: string; originalName: string; storageKey: string }[] }[];
   recordings: { id: string; status: string; storageKey?: string }[];
   events: { id: string; createdAt: string; type: string }[];
@@ -28,7 +28,7 @@ export default function History({ params }: { params: { id: string } }) {
       <h1>{session.title}</h1>
       <p>Status {session.status}; recording {session.recordingStatus}</p>
       <h2>Participants</h2>
-      {session.participants.map((participant) => <p key={participant.id}>{participant.displayName} — {participant.role} — {participant.status}</p>)}
+      {session.participants.map((participant) => <p key={participant.id}>{participant.displayName} — {participant.role} — {participant.status} — joined {new Date(participant.joinedAt).toLocaleString()} {participant.leftAt ? `— left ${new Date(participant.leftAt).toLocaleString()}` : ''}</p>)}
       <h2>Chat</h2>
       {session.messages.map((message) => (
         <p key={message.id}>

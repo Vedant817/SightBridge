@@ -1,1 +1,23 @@
-{"name":"@sightbridge/web","version":"1.0.0","scripts":{"dev":"next dev -p 3000","build":"next build","start":"next start -p 3000","test":"echo web smoke ok"},"dependencies":{"@sightbridge/shared":"workspace:*","next":"latest","react":"latest","react-dom":"latest","socket.io-client":"latest","mediasoup-client":"latest"},"devDependencies":{"typescript":"latest","@types/react":"latest","@types/node":"latest"}}
+{
+  "name": "@sightbridge/web",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "start": "next start -p 3000",
+    "test": "echo web smoke ok"
+  },
+  "dependencies": {
+    "@sightbridge/shared": "workspace:*",
+    "next": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "socket.io-client": "latest",
+    "mediasoup-client": "latest"
+  },
+  "devDependencies": {
+    "typescript": "latest",
+    "@types/react": "latest",
+    "@types/node": "latest"
+  }
+}

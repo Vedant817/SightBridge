@@ -1,0 +1,1 @@
+{"name":"@sightbridge/shared","version":"1.0.0","main":"dist/index.js","types":"dist/index.d.ts","scripts":{"build":"tsc -p tsconfig.json","test":"echo shared ok"},"dependencies":{"zod":"latest"},"devDependencies":{"typescript":"latest"}}

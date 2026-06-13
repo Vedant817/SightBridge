@@ -1,0 +1,25 @@
+{
+  "name": "@sightbridge/media-server",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/server.js",
+    "test": "echo media ok"
+  },
+  "dependencies": {
+    "express": "latest",
+    "socket.io": "latest",
+    "mediasoup": "latest",
+    "cors": "latest",
+    "pino": "latest",
+    "jsonwebtoken": "latest"
+  },
+  "devDependencies": {
+    "tsx": "latest",
+    "typescript": "latest",
+    "@types/express": "latest",
+    "@types/cors": "latest",
+    "@types/jsonwebtoken": "latest"
+  }
+}

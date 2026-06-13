@@ -14,7 +14,7 @@ flowchart LR
   SFU -->|server-routed WebRTC RTP| Web
 ```
 
-The Mermaid source is also available at `docs/architecture.mmd` for rendering into an image/PDF.
+The Mermaid source is also available at `docs/architecture.mmd` for rendering into an image/PDF. Deployment notes for Vercel, Neon, and the long-running API/SFU services are in `docs/deployment.md`.
 
 ## Local run
 
@@ -90,6 +90,10 @@ SightBridge routes live media through the self-hosted mediasoup SFU. Recording c
 - `/metrics` exposes active sessions, connected participants, created sessions, session errors, reconnect count, and active recordings.
 - The media server exposes mediasoup transport/producer/consumer flows for server-routed media.
 - The browser records a real WebM file during the fallback recording flow.
+
+## Deployment
+
+For a hosted demo, deploy `apps/web` to Vercel, use Neon Postgres free tier for `DATABASE_URL`/`DIRECT_URL`, and deploy `apps/api` plus `apps/media-server` on a long-running Node host with UDP support. Vercel is excellent for the web app, but the self-hosted mediasoup SFU must run outside serverless functions. See `docs/deployment.md`.
 
 ## Known limitations
 

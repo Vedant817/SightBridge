@@ -1,0 +1,6 @@
+{
+  "buildCommand": "pnpm --filter @sightbridge/web build",
+  "installCommand": "pnpm install --no-frozen-lockfile --filter @sightbridge/web...",
+  "outputDirectory": "apps/web/.next",
+  "framework": "nextjs"
+}

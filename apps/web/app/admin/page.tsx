@@ -28,7 +28,9 @@ export default function Admin() {
     socket.on('sessions:update', () => loadSessions().catch((err) => setError(err.message)));
     socket.on('presence:update', () => loadSessions().catch((err) => setError(err.message)));
     socket.on('session:end', () => loadSessions().catch((err) => setError(err.message)));
-    return () => socket?.close();
+    return () => {
+      socket?.close();
+    };
   }, []);
 
   async function forceEnd(sessionId: string) {

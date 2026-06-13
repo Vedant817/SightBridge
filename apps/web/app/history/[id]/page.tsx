@@ -21,7 +21,7 @@ function objectUrl(sessionId: string, storageKey: string) {
 
 export default function History({ params }: { params: { id: string } }) {
   const [session, setSession] = useState<History | undefined>();
-  useEffect(() => { api(`/sessions/${params.id}/history`).then(setSession); }, [params.id]);
+  useEffect(() => { api<History>(`/sessions/${params.id}/history`).then(setSession); }, [params.id]);
   if (!session) return <p>Loading…</p>;
   return (
     <div className="card">

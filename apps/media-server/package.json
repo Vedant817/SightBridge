@@ -10,7 +10,6 @@
   "dependencies": {
     "express": "latest",
     "socket.io": "latest",
-    "mediasoup": "latest",
     "cors": "latest",
     "pino": "latest",
     "jsonwebtoken": "latest"
@@ -21,5 +20,8 @@
     "@types/express": "latest",
     "@types/cors": "latest",
     "@types/jsonwebtoken": "latest"
+  },
+  "optionalDependencies": {
+    "mediasoup": "latest"
   }
 }

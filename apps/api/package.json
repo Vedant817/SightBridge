@@ -7,7 +7,9 @@
     "start": "node dist/server.js",
     "test": "vitest run",
     "prisma:migrate": "prisma migrate deploy",
-    "seed": "tsx src/seed.ts"
+    "seed": "tsx src/seed.ts",
+    "prisma:generate": "prisma generate",
+    "deploy:neon": "prisma migrate deploy && pnpm seed"
   },
   "dependencies": {
     "@prisma/client": "latest",

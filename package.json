@@ -11,9 +11,5 @@
   "devDependencies": {
     "turbo": "latest",
     "typescript": "latest"
-  },
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ]
+  }
 }

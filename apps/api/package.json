@@ -1,0 +1,43 @@
+{
+  "name": "@sightbridge/api",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "prisma generate && tsc -p tsconfig.json",
+    "start": "node dist/server.js",
+    "test": "vitest run",
+    "prisma:migrate": "prisma migrate deploy",
+    "seed": "tsx src/seed.ts",
+    "prisma:generate": "prisma generate",
+    "deploy:neon": "prisma migrate deploy && pnpm seed"
+  },
+  "dependencies": {
+    "@prisma/client": "latest",
+    "@sightbridge/shared": "workspace:*",
+    "bcryptjs": "latest",
+    "cors": "latest",
+    "express": "latest",
+    "express-rate-limit": "latest",
+    "helmet": "latest",
+    "jsonwebtoken": "latest",
+    "multer": "latest",
+    "prom-client": "latest",
+    "socket.io": "latest",
+    "zod": "latest",
+    "pino": "latest",
+    "ioredis": "latest",
+    "@aws-sdk/client-s3": "latest"
+  },
+  "devDependencies": {
+    "prisma": "latest",
+    "tsx": "latest",
+    "typescript": "latest",
+    "vitest": "latest",
+    "supertest": "latest",
+    "@types/express": "latest",
+    "@types/jsonwebtoken": "latest",
+    "@types/multer": "latest",
+    "@types/supertest": "latest",
+    "@types/cors": "latest"
+  }
+}

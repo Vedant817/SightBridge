@@ -1,0 +1,11 @@
+flowchart LR
+  Agent[Agent browser] -->|HTTPS REST + Socket.IO| Web[Next.js Web]
+  Customer[Customer browser] -->|Invite link + WebRTC| Web
+  Web -->|REST auth/session/history/upload| API[Express API]
+  Web -->|Socket.IO chat/presence| API
+  Web -->|mediasoup-client signaling| SFU[Self-hosted mediasoup SFU]
+  SFU -->|RTP audio/video routed on server| Web
+  API --> PG[(PostgreSQL durable session history)]
+  API --> Store[(Local/S3-compatible file storage)]
+  API --> Metrics[Prometheus /metrics]
+  API -. production-ready extension .-> Redis[(Redis reconnect/presence)]

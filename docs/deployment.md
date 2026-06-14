@@ -2,9 +2,11 @@
 
 ## Vercel frontend
 
-SightBridge deploys the browser UI to Vercel from the monorepo root using `vercel.json`. The Vercel build is intentionally filtered to `@sightbridge/web...` so the frontend build does not install or compile the native mediasoup worker used by the separate SFU service.
+SightBridge deploys the browser UI to Vercel using `vercel.json`. The Vercel build is intentionally filtered to `@sightbridge/web...` so the frontend build does not install or compile the native mediasoup worker used by the separate SFU service.
 
 The root `package.json` also declares `next`, `react`, and `react-dom` so Vercel's Next.js framework detection can identify the app version when the Vercel project Root Directory is the repository root. If you instead configure the Vercel project Root Directory to `apps/web`, keep the same environment variables below and let Vercel detect Next.js from `apps/web/package.json`.
+
+If the Vercel project Root Directory is `apps/api`, keep the Output Directory as `../web/.next`. Vercel resolves output paths relative to the configured Root Directory, so `apps/web/.next` would incorrectly resolve to `apps/api/apps/web/.next`.
 
 Required Vercel environment variables:
 

@@ -12,10 +12,12 @@ import multer from 'multer';
 import client from 'prom-client';
 import pino from 'pino';
 import { Server } from 'socket.io';
-import { PrismaClient, Role, SessionStatus } from '@prisma/client';
+import { PrismaClient, Role, SessionStatus } from './generated/prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
 import { chatSchema, createSessionSchema, joinSchema, loginSchema, uploadMimeTypes } from '@sightbridge/shared';
 
-const prisma = new PrismaClient();
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
+const prisma = new PrismaClient({ adapter });
 const log = pino({ name: 'sightbridge-api' });
 const app = express();
 const server = http.createServer(app);
@@ -176,7 +178,7 @@ app.get('/sessions', authenticate, requireAgent, async (_req, res) => {
 
 app.get('/sessions/:id/history', authenticate, requireAgent, async (req, res) => {
   const session = await prisma.session.findUnique({
-    where: { id: req.params.id },
+    where: { id: String(req.params.id) },
     include: { participants: true, events: true, messages: { include: { attachments: true } }, recordings: true },
   });
   if (!session) return res.status(404).json({ error: 'Session not found' });
@@ -184,61 +186,61 @@ app.get('/sessions/:id/history', authenticate, requireAgent, async (req, res) =>
 });
 
 app.post('/sessions/:id/end', authenticate, requireAgent, async (req, res) => {
-  await assertActiveSession(req.params.id);
-  await prisma.session.update({ where: { id: req.params.id }, data: { status: 'ENDED', endedAt: new Date() } });
-  await prisma.sessionParticipant.updateMany({ where: { sessionId: req.params.id, status: { not: 'LEFT' } }, data: { status: 'LEFT', leftAt: new Date() } });
-  await recordEvent(req.params.id, 'session.ended', 'AGENT');
-  io.to(req.params.id).emit('session:end');
+  await assertActiveSession(String(req.params.id));
+  await prisma.session.update({ where: { id: String(req.params.id) }, data: { status: 'ENDED', endedAt: new Date() } });
+  await prisma.sessionParticipant.updateMany({ where: { sessionId: String(req.params.id), status: { not: 'LEFT' } }, data: { status: 'LEFT', leftAt: new Date() } });
+  await recordEvent(String(req.params.id), 'session.ended', 'AGENT');
+  io.to(String(req.params.id)).emit('session:end');
   io.emit('sessions:update');
-  log.info({ sessionId: req.params.id }, 'session ended');
+  log.info({ sessionId: String(req.params.id) }, 'session ended');
   return res.json({ ok: true });
 });
 
 app.post('/sessions/:id/upload', authenticate, upload.single('file'), async (req, res) => {
   const user = (req as AuthedRequest).user;
   if (!req.file) return res.status(400).json({ error: 'Invalid file' });
-  await assertActiveSession(req.params.id);
-  if (user.role === 'CUSTOMER' && user.sessionId !== req.params.id) return res.status(403).json({ error: 'Wrong session' });
+  await assertActiveSession(String(req.params.id));
+  if (user.role === 'CUSTOMER' && user.sessionId !== String(req.params.id)) return res.status(403).json({ error: 'Wrong session' });
   const storageKey = await writeObject('uploads', req.file.buffer, path.extname(req.file.originalname).slice(0, 12));
   const message = await prisma.chatMessage.create({
     data: {
-      sessionId: req.params.id,
+      sessionId: String(req.params.id),
       senderRole: user.role,
       content: typeof req.body.content === 'string' && req.body.content.trim() ? req.body.content.trim() : 'Attachment',
       attachments: { create: { storageKey, originalName: path.basename(req.file.originalname).replace(/[^\w. -]/g, '_'), mimeType: req.file.mimetype, size: req.file.size } },
     },
     include: { attachments: true },
   });
-  io.to(req.params.id).emit('chat:message', message);
+  io.to(String(req.params.id)).emit('chat:message', message);
   return res.json(message);
 });
 
 
 app.get('/sessions/:id/objects/:folder/:name', authenticate, async (req, res) => {
   const user = (req as AuthedRequest).user;
-  if (user.role === 'CUSTOMER' && user.sessionId !== req.params.id) return res.status(403).json({ error: 'Wrong session' });
-  if (!['uploads', 'recordings'].includes(req.params.folder)) return res.status(400).json({ error: 'Invalid object folder' });
-  const safeName = path.basename(req.params.name);
-  const filePath = path.join(storageRoot, req.params.folder, safeName);
+  if (user.role === 'CUSTOMER' && user.sessionId !== String(req.params.id)) return res.status(403).json({ error: 'Wrong session' });
+  if (!['uploads', 'recordings'].includes(String(req.params.folder))) return res.status(400).json({ error: 'Invalid object folder' });
+  const safeName = path.basename(String(req.params.name));
+  const filePath = path.join(storageRoot, String(req.params.folder), safeName);
   return res.download(filePath, safeName);
 });
 
 app.post('/sessions/:id/recordings/start', authenticate, requireAgent, async (req, res) => {
-  await assertActiveSession(req.params.id);
-  const recording = await prisma.recording.create({ data: { sessionId: req.params.id, status: 'RECORDING' } });
-  await prisma.session.update({ where: { id: req.params.id }, data: { recordingStatus: 'RECORDING' } });
-  await recordEvent(req.params.id, 'recording.started', 'AGENT', { recordingId: recording.id });
-  io.to(req.params.id).emit('recording:status', 'RECORDING');
+  await assertActiveSession(String(req.params.id));
+  const recording = await prisma.recording.create({ data: { sessionId: String(req.params.id), status: 'RECORDING' } });
+  await prisma.session.update({ where: { id: String(req.params.id) }, data: { recordingStatus: 'RECORDING' } });
+  await recordEvent(String(req.params.id), 'recording.started', 'AGENT', { recordingId: recording.id });
+  io.to(String(req.params.id)).emit('recording:status', 'RECORDING');
   return res.json(recording);
 });
 
 app.post('/sessions/:id/recordings/browser-upload', authenticate, requireAgent, upload.single('file'), async (req, res) => {
   if (!req.file || req.file.mimetype !== 'video/webm') return res.status(400).json({ error: 'A WebM recording file is required' });
   const storageKey = await writeObject('recordings', req.file.buffer, '.webm');
-  const result = await prisma.recording.updateMany({ where: { sessionId: req.params.id, status: 'RECORDING' }, data: { status: 'READY', stoppedAt: new Date(), storageKey, size: req.file.size } });
-  await prisma.session.update({ where: { id: req.params.id }, data: { recordingStatus: result.count ? 'READY' : 'FAILED' } });
-  await recordEvent(req.params.id, result.count ? 'recording.ready' : 'recording.failed', 'AGENT', { storageKey });
-  io.to(req.params.id).emit('recording:status', result.count ? 'READY' : 'FAILED');
+  const result = await prisma.recording.updateMany({ where: { sessionId: String(req.params.id), status: 'RECORDING' }, data: { status: 'READY', stoppedAt: new Date(), storageKey, size: req.file.size } });
+  await prisma.session.update({ where: { id: String(req.params.id) }, data: { recordingStatus: result.count ? 'READY' : 'FAILED' } });
+  await recordEvent(String(req.params.id), result.count ? 'recording.ready' : 'recording.failed', 'AGENT', { storageKey });
+  io.to(String(req.params.id)).emit('recording:status', result.count ? 'READY' : 'FAILED');
   return res.json({ ok: result.count > 0, storageKey });
 });
 

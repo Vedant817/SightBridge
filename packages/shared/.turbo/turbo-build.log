@@ -1,0 +1,4 @@
+
+> @sightbridge/shared@1.0.0 build /Users/salescode/Documents/Code/SightBridge/packages/shared
+> tsc -p tsconfig.json
+

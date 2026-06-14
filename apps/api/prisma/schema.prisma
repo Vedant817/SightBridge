@@ -1,13 +1,117 @@
-generator client { provider = "prisma-client-js" }
-datasource db { provider = "postgresql" url = env("DATABASE_URL") }
-enum Role { AGENT CUSTOMER }
-enum SessionStatus { ACTIVE ENDED }
-enum ParticipantStatus { JOINED DISCONNECTED LEFT }
-enum RecordingStatus { IDLE RECORDING PROCESSING READY FAILED }
-model User { id String @id @default(uuid()) email String @unique passwordHash String role Role @default(AGENT) createdAt DateTime @default(now()) sessions Session[] }
-model Session { id String @id @default(uuid()) title String inviteTokenHash String @unique inviteExpiresAt DateTime inviteUsedAt DateTime? status SessionStatus @default(ACTIVE) recordingStatus RecordingStatus @default(IDLE) createdAt DateTime @default(now()) endedAt DateTime? agentId String agent User @relation(fields:[agentId], references:[id]) participants SessionParticipant[] events SessionEvent[] messages ChatMessage[] recordings Recording[] }
-model SessionParticipant { id String @id @default(uuid()) sessionId String session Session @relation(fields:[sessionId], references:[id]) role Role displayName String status ParticipantStatus @default(JOINED) socketId String? identityKey String joinedAt DateTime @default(now()) leftAt DateTime? disconnectedAt DateTime? @@unique([sessionId, identityKey]) }
-model SessionEvent { id String @id @default(uuid()) sessionId String session Session @relation(fields:[sessionId], references:[id]) type String actorRole Role? metadata Json? createdAt DateTime @default(now()) }
-model ChatMessage { id String @id @default(uuid()) sessionId String session Session @relation(fields:[sessionId], references:[id]) senderRole Role content String createdAt DateTime @default(now()) attachments ChatAttachment[] }
-model ChatAttachment { id String @id @default(uuid()) messageId String message ChatMessage @relation(fields:[messageId], references:[id]) storageKey String originalName String mimeType String size Int createdAt DateTime @default(now()) }
-model Recording { id String @id @default(uuid()) sessionId String session Session @relation(fields:[sessionId], references:[id]) status RecordingStatus @default(PROCESSING) storageKey String? startedAt DateTime @default(now()) stoppedAt DateTime? size Int? }
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  AGENT
+  CUSTOMER
+}
+
+enum SessionStatus {
+  ACTIVE
+  ENDED
+}
+
+enum ParticipantStatus {
+  JOINED
+  DISCONNECTED
+  LEFT
+}
+
+enum RecordingStatus {
+  IDLE
+  RECORDING
+  PROCESSING
+  READY
+  FAILED
+}
+
+model User {
+  id          String   @id @default(uuid())
+  email       String   @unique
+  passwordHash String
+  role        Role     @default(AGENT)
+  createdAt   DateTime @default(now())
+  sessions    Session[]
+}
+
+model Session {
+  id               String          @id @default(uuid())
+  title            String
+  inviteTokenHash  String          @unique
+  inviteExpiresAt  DateTime
+  inviteUsedAt     DateTime?
+  status           SessionStatus   @default(ACTIVE)
+  recordingStatus  RecordingStatus @default(IDLE)
+  createdAt        DateTime        @default(now())
+  endedAt          DateTime?
+  agentId          String
+  agent            User            @relation(fields: [agentId], references: [id])
+  participants     SessionParticipant[]
+  events           SessionEvent[]
+  messages         ChatMessage[]
+  recordings       Recording[]
+}
+
+model SessionParticipant {
+  id           String            @id @default(uuid())
+  sessionId    String
+  session      Session           @relation(fields: [sessionId], references: [id])
+  role         Role
+  displayName  String
+  status       ParticipantStatus @default(JOINED)
+  socketId     String?
+  identityKey  String
+  joinedAt     DateTime          @default(now())
+  leftAt       DateTime?
+  disconnectedAt DateTime?
+
+  @@unique([sessionId, identityKey])
+}
+
+model SessionEvent {
+  id        String   @id @default(uuid())
+  sessionId String
+  session   Session  @relation(fields: [sessionId], references: [id])
+  type      String
+  actorRole Role?
+  metadata  Json?
+  createdAt DateTime @default(now())
+}
+
+model ChatMessage {
+  id          String            @id @default(uuid())
+  sessionId   String
+  session     Session           @relation(fields: [sessionId], references: [id])
+  senderRole  Role
+  content     String
+  createdAt   DateTime          @default(now())
+  attachments ChatAttachment[]
+}
+
+model ChatAttachment {
+  id          String      @id @default(uuid())
+  messageId   String
+  message     ChatMessage @relation(fields: [messageId], references: [id])
+  storageKey  String
+  originalName String
+  mimeType    String
+  size        Int
+  createdAt   DateTime    @default(now())
+}
+
+model Recording {
+  id        String          @id @default(uuid())
+  sessionId String
+  session   Session         @relation(fields: [sessionId], references: [id])
+  status    RecordingStatus @default(PROCESSING)
+  storageKey String?
+  startedAt DateTime        @default(now())
+  stoppedAt DateTime?
+  size      Int?
+}

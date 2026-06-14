@@ -12,6 +12,8 @@
     "deploy:neon": "prisma migrate deploy && pnpm seed"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "latest",
+    "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "latest",
     "@sightbridge/shared": "workspace:*",
     "bcryptjs": "latest",
@@ -19,25 +21,24 @@
     "express": "latest",
     "express-rate-limit": "latest",
     "helmet": "latest",
+    "ioredis": "latest",
     "jsonwebtoken": "latest",
     "multer": "latest",
+    "pino": "latest",
     "prom-client": "latest",
     "socket.io": "latest",
-    "zod": "latest",
-    "pino": "latest",
-    "ioredis": "latest",
-    "@aws-sdk/client-s3": "latest"
+    "zod": "latest"
   },
   "devDependencies": {
-    "prisma": "latest",
-    "tsx": "latest",
-    "typescript": "latest",
-    "vitest": "latest",
-    "supertest": "latest",
+    "@types/cors": "latest",
     "@types/express": "latest",
     "@types/jsonwebtoken": "latest",
     "@types/multer": "latest",
     "@types/supertest": "latest",
-    "@types/cors": "latest"
+    "prisma": "latest",
+    "supertest": "latest",
+    "tsx": "latest",
+    "typescript": "latest",
+    "vitest": "latest"
   }
 }

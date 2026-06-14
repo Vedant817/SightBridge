@@ -1,0 +1,4 @@
+
+> @sightbridge/media-server@1.0.0 build /Users/salescode/Documents/Code/SightBridge/apps/media-server
+> tsc -p tsconfig.json
+

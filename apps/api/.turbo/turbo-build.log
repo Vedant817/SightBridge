@@ -1,0 +1,10 @@
+
+> @sightbridge/api@1.0.0 build /Users/salescode/Documents/Code/SightBridge/apps/api
+> prisma generate && tsc -p tsconfig.json
+
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (7.8.0) to ./src/generated/prisma in 77ms
+

@@ -26,6 +26,11 @@ docker compose up --build
 
 Open <http://localhost:3000>. The compose seed step creates the local agent from `SEED_AGENT_EMAIL` and `SEED_AGENT_PASSWORD` in `.env`.
 
+Default local demo login:
+
+- Email: `agent@sightbridge.local`
+- Password: `password123`
+
 ## Monorepo layout
 
 - `apps/web`: Next.js frontend for agent login, dashboard, customer join, active call, history, and admin live sessions.

@@ -8,6 +8,11 @@
     "test": "turbo test",
     "lint": "turbo lint"
   },
+  "dependencies": {
+    "next": "latest",
+    "react": "latest",
+    "react-dom": "latest"
+  },
   "devDependencies": {
     "turbo": "latest",
     "typescript": "latest"

@@ -2,21 +2,16 @@
 > @sightbridge/web@1.0.0 build /Users/salescode/Documents/Code/SightBridge/apps/web
 > next build
 
-▲ Next.js 16.2.9 (Turbopack)
+[1m[38;2;173;127;168m▲ Next.js 16.2.9[39m[22m (Turbopack)
 
-  Creating an optimized production build ...
-✓ Compiled successfully in 1822ms
-  Running TypeScript ...
-  Finished TypeScript in 1035ms ...
-  Collecting page data using 7 workers ...
-  Generating static pages using 7 workers (0/5) ...
-  Generating static pages using 7 workers (1/5) 
-  Generating static pages using 7 workers (2/5) 
-  Generating static pages using 7 workers (3/5) 
-✓ Generating static pages using 7 workers (5/5) in 81ms
-  Finalizing page optimization ...
+[37m[1m [22m[39m Creating an optimized production build ...
+[32m[1m✓[22m[39m Compiled successfully in 1781ms
+[?25l[37m[1m [22m[39m Running TypeScript  [36m.[39m[2K[1G[37m[1m [22m[39m Running TypeScript  [36m..[39m[2K[1G[37m[1m [22m[39m Running TypeScript  [36m...[39m[2K[1G[37m[1m [22m[39m Running TypeScript  [36m.[39m[2K[1G[37m[1m [22m[39m Running TypeScript  [36m..[39m[2K[1G[37m[1m [22m[39m Running TypeScript  [36m...[39m[2K[1G[?25h[?25l[37m[1m [22m[39m Finished TypeScript in 1096ms  [36m.[39m[2K[1G[?25h[37m[1m [22m[39m Finished TypeScript in 1096ms    [32m[1m✓[22m[39m Finished TypeScript in 1096ms 
+[?25l[37m[1m [22m[39m Collecting page data using 7 workers  [36m.[39m[2K[1G[37m[1m [22m[39m Collecting page data using 7 workers  [36m..[39m[2K[1G[?25h[37m[1m [22m[39m Collecting page data using 7 workers in 307ms    [32m[1m✓[22m[39m Collecting page data using 7 workers in 307ms 
+[?25l[37m[1m [22m[39m Generating static pages using 7 workers (0/5)  [36m[    ][39m[2K[1G[?25h[32m[1m✓[22m[39m Generating static pages using 7 workers (5/5) in 77ms
+[?25l[37m[1m [22m[39m Finalizing page optimization  [36m.[39m[2K[1G[?25h[37m[1m [22m[39m Finalizing page optimization in 167ms    [32m[1m✓[22m[39m Finalizing page optimization in 167ms 
 
-Route (app)
+[4mRoute (app)[24m
 ┌ ○ /
 ├ ○ /_not-found
 ├ ○ /admin
@@ -29,3 +24,4 @@ Route (app)
 ○  (Static)   prerendered as static content
 ƒ  (Dynamic)  server-rendered on demand
 
+[?25h

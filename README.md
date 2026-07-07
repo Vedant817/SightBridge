@@ -20,13 +20,14 @@ The Mermaid source is also available at `docs/architecture.mmd` for rendering in
 
 ```bash
 cp .env.example .env
-# edit JWT_SECRET and INVITE_SECRET before exposing beyond localhost
+# local demo credentials are unsafe for production; change all secrets before exposing beyond localhost
+# production startup blocks SEED_AGENT_PASSWORD=password123, localhost-only secrets, and missing ANNOUNCED_IP
 docker compose up --build
 ```
 
 Open <http://localhost:3000>. The compose seed step creates the local agent from `SEED_AGENT_EMAIL` and `SEED_AGENT_PASSWORD` in `.env`.
 
-Default local demo login:
+Default local demo login (local development only; production startup rejects `SEED_AGENT_PASSWORD=password123`):
 
 - Email: `agent@sightbridge.local`
 - Password: `password123`
@@ -66,6 +67,8 @@ The Prisma schema and SQL migration define persistent `User`, `Session`, `Sessio
 - Uploads validate MIME type and size, sanitize display names, and store generated object keys.
 - CORS origins and secrets are configured through environment variables.
 - Login and session creation are rate-limited.
+- Object downloads verify the authenticated requester is an actual participant for that session and that the requested object belongs to that session.
+- Production startup blocks the demo seed password, localhost/demo secrets, and missing public `ANNOUNCED_IP`.
 
 ## Recording limitation
 
@@ -100,8 +103,18 @@ SightBridge routes live media through the self-hosted mediasoup SFU. Recording c
 
 For a hosted demo, deploy `apps/web` to Vercel, use Neon Postgres free tier for `DATABASE_URL`/`DIRECT_URL`, and deploy `apps/api` plus `apps/media-server` on a long-running Node host with UDP support. Vercel is excellent for the web app, but the self-hosted mediasoup SFU must run outside serverless functions. See `docs/deployment.md`.
 
+## Production WebRTC and TURN
+
+Restrictive NATs and corporate firewalls often require TURN relay. Set these variables for production media deployments and point them at your coturn or managed TURN service:
+
+- `ANNOUNCED_IP`: public routable IP or DNS-resolved address advertised by mediasoup. Required when `NODE_ENV=production`.
+- `TURN_URL`: comma-separated TURN URLs, such as `turn:turn.example.com:3478?transport=udp,turns:turn.example.com:5349?transport=tcp`.
+- `TURN_USERNAME`: TURN credential username.
+- `TURN_PASSWORD`: TURN credential password.
+
+The media server passes configured TURN ICE servers to browser mediasoup transports and still exposes UDP ports `40000-40100` for direct SFU connectivity when available.
+
 ## Known limitations
 
-- Redis is included in the architecture and compose stack, but this compact implementation still keeps reconnect timers in the API process; a horizontally scaled deployment should move those timers to Redis key expiry or a queue.
-- TURN/coturn is not bundled. Production deployments across restrictive NATs should set `ANNOUNCED_IP` and add TURN.
+- TURN/coturn is documented and configurable but not bundled as a compose service.
 - The recording fallback captures the agent browser stream, not a server-side SFU mixed composition.

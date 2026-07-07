@@ -8,20 +8,20 @@
     "test": "echo media ok"
   },
   "dependencies": {
-    "express": "latest",
-    "socket.io": "latest",
-    "cors": "latest",
-    "pino": "latest",
-    "jsonwebtoken": "latest"
+    "express": "5.2.1",
+    "socket.io": "4.8.3",
+    "cors": "2.8.6",
+    "pino": "10.3.1",
+    "jsonwebtoken": "9.0.3"
   },
   "devDependencies": {
-    "tsx": "latest",
-    "typescript": "latest",
-    "@types/express": "latest",
-    "@types/cors": "latest",
-    "@types/jsonwebtoken": "latest"
+    "tsx": "4.22.4",
+    "typescript": "6.0.3",
+    "@types/express": "5.0.6",
+    "@types/cors": "2.8.19",
+    "@types/jsonwebtoken": "9.0.10"
   },
   "optionalDependencies": {
-    "mediasoup": "latest"
+    "mediasoup": "3.20.5"
   }
 }

@@ -15,9 +15,9 @@
     "test": "echo shared ok"
   },
   "dependencies": {
-    "zod": "latest"
+    "zod": "4.4.3"
   },
   "devDependencies": {
-    "typescript": "latest"
+    "typescript": "6.0.3"
   }
 }

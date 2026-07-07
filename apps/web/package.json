@@ -9,15 +9,15 @@
   },
   "dependencies": {
     "@sightbridge/shared": "workspace:*",
-    "next": "latest",
-    "react": "latest",
-    "react-dom": "latest",
-    "socket.io-client": "latest",
-    "mediasoup-client": "latest"
+    "next": "16.2.9",
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
+    "socket.io-client": "4.8.3",
+    "mediasoup-client": "3.20.0"
   },
   "devDependencies": {
-    "typescript": "latest",
-    "@types/react": "latest",
-    "@types/node": "latest"
+    "typescript": "6.0.3",
+    "@types/react": "19.2.17",
+    "@types/node": "25.9.3"
   }
 }

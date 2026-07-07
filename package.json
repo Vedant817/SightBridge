@@ -9,12 +9,12 @@
     "lint": "turbo lint"
   },
   "dependencies": {
-    "next": "latest",
-    "react": "latest",
-    "react-dom": "latest"
+    "next": "16.2.9",
+    "react": "19.2.7",
+    "react-dom": "19.2.7"
   },
   "devDependencies": {
-    "turbo": "latest",
-    "typescript": "latest"
+    "turbo": "2.9.18",
+    "typescript": "6.0.3"
   }
 }

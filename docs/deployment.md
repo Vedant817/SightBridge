@@ -26,6 +26,27 @@ Run migrations from the API service or a CI job:
 pnpm --filter @sightbridge/api deploy:neon
 ```
 
+
+## Production safety checks
+
+When `NODE_ENV=production`, the API and media services fail fast if demo or localhost-only settings are still present:
+
+- `SEED_AGENT_PASSWORD=password123` is blocked.
+- Placeholder/localhost `JWT_SECRET` and `INVITE_SECRET` values are blocked.
+- `ANNOUNCED_IP` is required and cannot be `127.0.0.1` or `localhost`.
+
+Keep the default `agent@sightbridge.local` / `password123` credentials only for local development.
+
+## TURN configuration
+
+For restrictive NAT or firewall environments, run coturn or use a managed TURN provider and set:
+
+- `TURN_URL`: comma-separated `turn:` / `turns:` URLs.
+- `TURN_USERNAME`: TURN username.
+- `TURN_PASSWORD`: TURN password.
+
+The media server includes these values in the browser transport options so clients can relay media through TURN when direct UDP connectivity fails.
+
 ## Realtime and media hosting
 
 Vercel serverless functions are not suitable for the long-lived UDP/WebRTC media worker. Deploy these separately on a Node-capable host with UDP support, such as Fly.io, Render, Railway, a VPS, or a Kubernetes cluster:

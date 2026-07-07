@@ -12,9 +12,12 @@ import multer from 'multer';
 import client from 'prom-client';
 import pino from 'pino';
 import { Server } from 'socket.io';
+import Redis from 'ioredis';
 import { PrismaClient, Role, SessionStatus } from './generated/prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { chatSchema, createSessionSchema, joinSchema, loginSchema, uploadMimeTypes } from '@sightbridge/shared';
+
+validateProductionConfig();
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
 const prisma = new PrismaClient({ adapter });
@@ -26,6 +29,12 @@ const jwtSecret = requiredEnv('JWT_SECRET');
 const invitePepper = requiredEnv('INVITE_SECRET');
 const storageRoot = process.env.LOCAL_STORAGE_DIR ?? '/data/sightbridge';
 const reconnectGraceMs = Number(process.env.RECONNECT_GRACE_MS ?? 30_000);
+const redis = new Redis(process.env.REDIS_URL ?? 'redis://localhost:6379', { lazyConnect: true, maxRetriesPerRequest: 1 });
+const reconnectQueueKey = 'sightbridge:reconnect:deadlines';
+const reconnectParticipantKeyPrefix = 'sightbridge:reconnect:participant:';
+let redisReady = false;
+redis.on('error', (error) => log.error({ error }, 'redis connection failed'));
+redis.connect().then(() => { redisReady = true; }).catch((error) => log.error({ error }, 'redis unavailable; reconnect deadlines will not be scheduled'));
 
 const io = new Server(server, { cors: { origin: corsOrigin } });
 const upload = multer({
@@ -63,6 +72,17 @@ function requiredEnv(name: string): string {
   return value;
 }
 
+function validateProductionConfig() {
+  if (process.env.NODE_ENV !== 'production') return;
+  const blockedSecrets = ['replace-with-at-least-32-random-characters', 'replace-with-another-32-random-characters'];
+  for (const name of ['JWT_SECRET', 'INVITE_SECRET']) {
+    const value = process.env[name] ?? '';
+    if (blockedSecrets.includes(value) || /localhost|127\.0\.0\.1/i.test(value)) throw new Error(`${name} must be a production-grade secret, not a localhost/demo value`);
+  }
+  if (process.env.SEED_AGENT_PASSWORD === 'password123') throw new Error('SEED_AGENT_PASSWORD=password123 is blocked in production');
+  if (!process.env.ANNOUNCED_IP || ['127.0.0.1', 'localhost'].includes(process.env.ANNOUNCED_IP)) throw new Error('ANNOUNCED_IP must be set to a public routable address in production');
+}
+
 function hashToken(token: string): string {
   return crypto.createHmac('sha256', invitePepper).update(token).digest('hex');
 }
@@ -95,6 +115,16 @@ async function recordEvent(sessionId: string, type: string, actorRole?: Role, me
   await prisma.sessionEvent.create({ data: { sessionId, type, actorRole, metadata: metadata as object } });
 }
 
+async function assertSessionAccess(user: AuthUser, sessionId: string) {
+  if (user.role === 'CUSTOMER') {
+    if (user.sessionId !== sessionId) return false;
+    const participant = await prisma.sessionParticipant.findFirst({ where: { id: user.sub, sessionId, role: 'CUSTOMER' } });
+    return Boolean(participant);
+  }
+  const agentParticipant = await prisma.sessionParticipant.findFirst({ where: { sessionId, role: 'AGENT', identityKey: `agent:${user.sub}` } });
+  return Boolean(agentParticipant);
+}
+
 async function assertActiveSession(sessionId: string) {
   const session = await prisma.session.findUnique({ where: { id: sessionId } });
   if (!session || session.status !== SessionStatus.ACTIVE) {
@@ -104,6 +134,35 @@ async function assertActiveSession(sessionId: string) {
   }
   return session;
 }
+
+async function scheduleReconnectDeadline(socketId: string) {
+  if (!redisReady) return;
+  const participant = await prisma.sessionParticipant.findFirst({ where: { socketId, status: 'DISCONNECTED' } });
+  if (!participant) return;
+  const dueAt = Date.now() + reconnectGraceMs;
+  await redis.set(`${reconnectParticipantKeyPrefix}${socketId}`, participant.id, 'PX', reconnectGraceMs + 60_000);
+  await redis.zadd(reconnectQueueKey, dueAt, socketId);
+}
+
+async function clearReconnectDeadline(socketId: string) {
+  if (!redisReady || !socketId) return;
+  await redis.del(`${reconnectParticipantKeyPrefix}${socketId}`);
+  await redis.zrem(reconnectQueueKey, socketId);
+}
+
+setInterval(async () => {
+  if (!redisReady) return;
+  const dueSocketIds = await redis.zrangebyscore(reconnectQueueKey, 0, Date.now(), 'LIMIT', 0, 100);
+  for (const socketId of dueSocketIds) {
+    const participantId = await redis.get(`${reconnectParticipantKeyPrefix}${socketId}`);
+    if (participantId) {
+      await prisma.sessionParticipant.updateMany({ where: { id: participantId, socketId, status: 'DISCONNECTED' }, data: { status: 'LEFT', leftAt: new Date() } });
+      await redis.del(`${reconnectParticipantKeyPrefix}${socketId}`);
+    }
+    await redis.zrem(reconnectQueueKey, socketId);
+  }
+  if (dueSocketIds.length) io.emit('sessions:update');
+}, Math.min(reconnectGraceMs, 5_000)).unref();
 
 async function writeObject(folder: 'uploads' | 'recordings', bytes: Buffer, extension = '') {
   const id = `${crypto.randomUUID()}${extension}`;
@@ -200,7 +259,7 @@ app.post('/sessions/:id/upload', authenticate, upload.single('file'), async (req
   const user = (req as AuthedRequest).user;
   if (!req.file) return res.status(400).json({ error: 'Invalid file' });
   await assertActiveSession(String(req.params.id));
-  if (user.role === 'CUSTOMER' && user.sessionId !== String(req.params.id)) return res.status(403).json({ error: 'Wrong session' });
+  if (!(await assertSessionAccess(user, String(req.params.id)))) return res.status(403).json({ error: 'Session access required' });
   const storageKey = await writeObject('uploads', req.file.buffer, path.extname(req.file.originalname).slice(0, 12));
   const message = await prisma.chatMessage.create({
     data: {
@@ -218,9 +277,16 @@ app.post('/sessions/:id/upload', authenticate, upload.single('file'), async (req
 
 app.get('/sessions/:id/objects/:folder/:name', authenticate, async (req, res) => {
   const user = (req as AuthedRequest).user;
-  if (user.role === 'CUSTOMER' && user.sessionId !== String(req.params.id)) return res.status(403).json({ error: 'Wrong session' });
+  const sessionId = String(req.params.id);
+  if (!(await assertSessionAccess(user, sessionId))) return res.status(403).json({ error: 'Session access required' });
   if (!['uploads', 'recordings'].includes(String(req.params.folder))) return res.status(400).json({ error: 'Invalid object folder' });
   const safeName = path.basename(String(req.params.name));
+  const storageKey = `${String(req.params.folder)}/${safeName}`;
+  const [attachment, recording] = await Promise.all([
+    prisma.chatAttachment.findFirst({ where: { storageKey, message: { sessionId } } }),
+    prisma.recording.findFirst({ where: { storageKey, sessionId } }),
+  ]);
+  if (!attachment && !recording) return res.status(404).json({ error: 'Object not found for this session' });
   const filePath = path.join(storageRoot, String(req.params.folder), safeName);
   return res.download(filePath, safeName);
 });
@@ -263,6 +329,7 @@ io.on('connection', (socket) => {
       where: user.role === 'AGENT' ? { sessionId, identityKey: `agent:${user.sub}` } : { id: user.sub, sessionId },
       data: { socketId: socket.id, status: 'JOINED', disconnectedAt: null },
     });
+    await clearReconnectDeadline(socket.id);
     reconnectCounter.inc();
     io.to(sessionId).emit('presence:update');
     io.emit('sessions:update');
@@ -278,10 +345,7 @@ io.on('connection', (socket) => {
   socket.on('disconnect', async () => {
     await prisma.sessionParticipant.updateMany({ where: { socketId: socket.id }, data: { status: 'DISCONNECTED', disconnectedAt: new Date() } });
     io.emit('sessions:update');
-    setTimeout(async () => {
-      await prisma.sessionParticipant.updateMany({ where: { socketId: socket.id, status: 'DISCONNECTED' }, data: { status: 'LEFT', leftAt: new Date() } });
-      io.emit('sessions:update');
-    }, reconnectGraceMs);
+    await scheduleReconnectDeadline(socket.id);
   });
 });
 
